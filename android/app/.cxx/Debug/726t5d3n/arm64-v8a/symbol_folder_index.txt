@@ -1,0 +1,1 @@
+D:\VisualStudio Proyectos\Varios Proyectos\calculadora_prestamos\build\app\intermediates\cxx\Debug\726t5d3n\obj\arm64-v8a

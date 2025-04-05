@@ -1,0 +1,2 @@
+D:/VisualStudio Proyectos/Varios Proyectos/calculadora_prestamos/android/app/.cxx/RelWithDebInfo/2l2po221/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/VisualStudio Proyectos/Varios Proyectos/calculadora_prestamos/android/app/.cxx/RelWithDebInfo/2l2po221/arm64-v8a/CMakeFiles/rebuild_cache.dir

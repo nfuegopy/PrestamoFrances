@@ -1,0 +1,2 @@
+D:/VisualStudio Proyectos/Varios Proyectos/calculadora_prestamos/android/app/.cxx/Debug/726t5d3n/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/VisualStudio Proyectos/Varios Proyectos/calculadora_prestamos/android/app/.cxx/Debug/726t5d3n/armeabi-v7a/CMakeFiles/rebuild_cache.dir
