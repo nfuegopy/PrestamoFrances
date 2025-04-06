@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/amortizacion_model.dart';
 import '../utils/pdf_generator.dart';
 import 'pdf_preview_screen.dart';
+import 'product_selection_screen.dart';
 
 class CalculadoraScreen extends StatefulWidget {
   const CalculadoraScreen({super.key});
@@ -16,7 +17,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _mostrarTabla = false;
 
-  // Controladores para los campos de texto
   final TextEditingController _capitalController = TextEditingController();
   final TextEditingController _tasaController = TextEditingController();
   final TextEditingController _plazoController = TextEditingController();
@@ -30,7 +30,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
   @override
   void initState() {
     super.initState();
-    // Inicializamos los controladores con los valores del modelo
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final model = Provider.of<AmortizacionModel>(context, listen: false);
       _capitalController.text = model.capital.toString();
@@ -43,7 +42,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
 
   @override
   void dispose() {
-    // Liberamos los controladores
     _capitalController.dispose();
     _tasaController.dispose();
     _plazoController.dispose();
@@ -91,8 +89,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                             ),
                       ),
                       const SizedBox(height: 12.0),
-
-                      // Checkbox para cliente innominado
                       Row(
                         children: [
                           Checkbox(
@@ -110,8 +106,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                           const Text('Cliente Innominado'),
                         ],
                       ),
-
-                      // Nombre del cliente
                       TextFormField(
                         controller: _nombreController,
                         decoration: const InputDecoration(
@@ -124,8 +118,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                         onChanged: (value) => model.nombreCliente = value,
                       ),
                       const SizedBox(height: 12.0),
-
-                      // Identificación
                       TextFormField(
                         controller: _identificacionController,
                         decoration: const InputDecoration(
@@ -138,8 +130,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                         onChanged: (value) => model.identificacion = value,
                       ),
                       const SizedBox(height: 12.0),
-
-                      // Fecha de emisión
                       InkWell(
                         onTap: () async {
                           if (!model.esInnominado) {
@@ -173,8 +163,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                         ),
                       ),
                       const SizedBox(height: 12.0),
-
-                      // Checkbox para omitir fecha de vencimiento
                       Row(
                         children: [
                           Checkbox(
@@ -191,8 +179,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                           const Text('Omitir Fecha de Vencimiento'),
                         ],
                       ),
-
-                      // Fecha de vencimiento
                       InkWell(
                         onTap: () async {
                           if (model.fechaVencimiento != null ||
@@ -233,7 +219,57 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                 ),
               ),
 
-              // Sección de parámetros del préstamo
+              // Nueva sección para productos seleccionados
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.only(bottom: 12.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Productos Seleccionados',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.blueAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 12.0),
+                      if (model.selectedProducts.isEmpty)
+                        const Text('No hay productos seleccionados.'),
+                      if (model.selectedProducts.isNotEmpty)
+                        Column(
+                          children: model.selectedProducts.map((product) {
+                            return ListTile(
+                              title: Text(product.name),
+                              subtitle: Text(
+                                  '${product.currency == 'GS' ? '₲' : '\$'} ${product.price.toStringAsFixed(2)}'),
+                            );
+                          }).toList(),
+                        ),
+                      const SizedBox(height: 12.0),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ProductSelectionScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text('Seleccionar Productos'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Sección de parámetros del préstamo (modificada)
               Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
@@ -253,36 +289,11 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                             ),
                       ),
                       const SizedBox(height: 12.0),
-
-                      // Selector de moneda
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(
-                          labelText: 'Moneda',
-                          border: OutlineInputBorder(),
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                        value: model.moneda,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'guaranies',
-                            child: Text('Guaraníes (₲)'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'dolares',
-                            child: Text('Dólares (USD)'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            model.moneda = value;
-                            _capitalController.text = model.capital.toString();
-                          }
-                        },
-                      ),
+                      // Mostrar la moneda (ahora es dinámica según los productos)
+                      Text(
+                          'Moneda: ${model.moneda == 'guaranies' ? 'Guaraníes (₲)' : 'Dólares (USD)'}'),
                       const SizedBox(height: 12.0),
-
-                      // Capital
+                      // Capital (ahora es de solo lectura)
                       TextFormField(
                         controller: _capitalController,
                         decoration: InputDecoration(
@@ -293,26 +304,11 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
                         ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor ingrese el capital';
-                          }
-                          if (double.tryParse(value) == null) {
-                            return 'Por favor ingrese un número válido';
-                          }
-                          return null;
-                        },
-                        onChanged: (value) {
-                          final capital = double.tryParse(value);
-                          if (capital != null) {
-                            model.capital = capital;
-                          }
-                        },
+                        enabled:
+                            false, // Deshabilitado porque se calcula automáticamente
                       ),
                       const SizedBox(height: 12.0),
-
-                      // Tasa de interés
+                      // Tasa de interés (ahora es de solo lectura)
                       TextFormField(
                         controller: _tasaController,
                         decoration: const InputDecoration(
@@ -322,25 +318,10 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                           contentPadding:
                               EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor ingrese la tasa de interés';
-                          }
-                          if (double.tryParse(value) == null) {
-                            return 'Por favor ingrese un número válido';
-                          }
-                          return null;
-                        },
-                        onChanged: (value) {
-                          final tasa = double.tryParse(value);
-                          if (tasa != null) {
-                            model.tasa = tasa;
-                          }
-                        },
+                        enabled:
+                            false, // Deshabilitado porque es predeterminada
                       ),
                       const SizedBox(height: 12.0),
-
                       // Plazo
                       TextFormField(
                         controller: _plazoController,
@@ -519,7 +500,6 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      // Mostrar indicador de progreso
                       showDialog(
                         context: context,
                         barrierDismissible: false,
@@ -532,10 +512,8 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                         final pdfGenerator = PdfGenerator();
                         final pdfBytes = await pdfGenerator.generarPdf(model);
 
-                        // Cerrar diálogo de progreso
                         Navigator.pop(context);
 
-                        // Navegar a la pantalla de previsualización y descarga del PDF
                         if (!mounted) return;
                         Navigator.push(
                           context,
@@ -548,10 +526,7 @@ class _CalculadoraScreenState extends State<CalculadoraScreen> {
                           ),
                         );
                       } catch (e) {
-                        // Cerrar diálogo de progreso
                         Navigator.pop(context);
-
-                        // Mostrar mensaje de error
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Error al generar el PDF: $e'),

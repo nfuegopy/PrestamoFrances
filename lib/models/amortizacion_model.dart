@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
+import 'product.dart';
 
 class FilaAmortizacion {
   final int mes;
@@ -19,7 +20,7 @@ class FilaAmortizacion {
 }
 
 class AmortizacionModel extends ChangeNotifier {
-  double _capital = 5000000;
+  double _capital = 0; // Ahora el capital será dinámico
   double _tasa = 10.0;
   int _plazo = 12;
   String _moneda = 'guaranies';
@@ -32,6 +33,7 @@ class AmortizacionModel extends ChangeNotifier {
   double _cuotaMensual = 0;
   double _totalPagado = 0;
   double _totalIntereses = 0;
+  List<Product> _selectedProducts = []; // Lista de productos seleccionados
 
   // Getters
   double get capital => _capital;
@@ -47,8 +49,9 @@ class AmortizacionModel extends ChangeNotifier {
   double get cuotaMensual => _cuotaMensual;
   double get totalPagado => _totalPagado;
   double get totalIntereses => _totalIntereses;
+  List<Product> get selectedProducts => _selectedProducts;
 
-  // Setters que recalculan la tabla de amortización
+  // Setters
   set capital(double value) {
     _capital = value;
     calcularAmortizacion();
@@ -68,12 +71,11 @@ class AmortizacionModel extends ChangeNotifier {
   }
 
   set moneda(String value) {
-    // Convertir el capital si cambia la moneda
     if (value != _moneda) {
       if (value == 'guaranies' && _capital < 1000) {
-        _capital = _capital * 7000; // Convertir de USD a PYG (aproximado)
+        _capital = _capital * 7000;
       } else if (value == 'dolares' && _capital > 1000) {
-        _capital = _capital / 7000; // Convertir de PYG a USD (aproximado)
+        _capital = _capital / 7000;
       }
     }
     _moneda = value;
@@ -106,14 +108,47 @@ class AmortizacionModel extends ChangeNotifier {
   }
 
   set fechaVencimiento(String? value) {
-    // Setter para fecha de vencimiento
     _fechaVencimiento = value;
     notifyListeners();
   }
 
+  // Método para actualizar los productos seleccionados y recalcular el capital
+  void updateSelectedProducts(List<Product> products) {
+    _selectedProducts = products;
+
+    // Calcular el capital sumando los precios de los productos seleccionados
+    double total = 0;
+    String? detectedCurrency;
+
+    for (var product in products) {
+      if (detectedCurrency == null) {
+        detectedCurrency = product.currency;
+      }
+
+      if (product.currency == detectedCurrency) {
+        total += product.price;
+      } else {
+        // Convertir a la moneda base (GS) si hay monedas mixtas
+        if (product.currency == 'GS' && detectedCurrency == 'USD') {
+          total += product.price / 7000;
+        } else if (product.currency == 'USD' && detectedCurrency == 'GS') {
+          total += product.price * 7000;
+        }
+      }
+    }
+
+    // Actualizar la moneda del préstamo según la moneda detectada
+    _moneda = detectedCurrency == 'USD' ? 'dolares' : 'guaranies';
+    _capital = total;
+
+    // Aplicar tasa de interés predeterminada según la moneda
+    _tasa = _moneda == 'guaranies' ? 18.0 : 13.0;
+
+    calcularAmortizacion();
+    notifyListeners();
+  }
+
   // Formateador de moneda
-  // Formateador de moneda
-// Formateador de moneda (ya ajustado anteriormente)
   String formatoMoneda(double valor) {
     if (_moneda == 'guaranies') {
       final formatter = NumberFormat("#,##0", "es_PY");
@@ -127,8 +162,7 @@ class AmortizacionModel extends ChangeNotifier {
   }
 
   // Cálculo de la cuota mensual (Sistema Francés)
-  double calcularCuotaMensual(
-      double capital, double tasaAnual, int plazoMeses) {
+  double calcularCuotaMensual(double capital, double tasaAnual, int plazoMeses) {
     final tasaMensual = tasaAnual / 100 / 12;
     return capital *
         tasaMensual *
@@ -167,14 +201,12 @@ class AmortizacionModel extends ChangeNotifier {
     _tablaAmortizacion = tabla;
   }
 
-  // Constructor que inicializa la tabla de amortización
   AmortizacionModel() {
     calcularAmortizacion();
   }
 
-  // Método para limpiar el formulario
   void reset() {
-    _capital = 100000000;
+    _capital = 0;
     _tasa = 10.0;
     _plazo = 12;
     _moneda = 'guaranies';
@@ -183,6 +215,7 @@ class AmortizacionModel extends ChangeNotifier {
     _identificacion = '';
     _fechaEmision = DateFormat('yyyy-MM-dd').format(DateTime.now());
     _fechaVencimiento = null;
+    _selectedProducts = [];
     calcularAmortizacion();
     notifyListeners();
   }
